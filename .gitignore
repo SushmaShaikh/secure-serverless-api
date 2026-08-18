@@ -1,0 +1,25 @@
+# Secrets / local config - NEVER commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*
+.aws/
+
+# SAM / CloudFormation build artifacts
+.aws-sam/
+samconfig.toml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node (if used for tooling/tests)
+node_modules/
+
+# Editor
+.vscode/
+.idea/

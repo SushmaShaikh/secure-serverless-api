@@ -1,0 +1,14 @@
+#!/bin/sh
+# Blocks the commit if gitleaks finds a likely secret in staged changes.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "gitleaks not found on PATH - skipping secret scan (install it: winget install Gitleaks.Gitleaks)"
+  exit 0
+fi
+
+gitleaks protect --staged --redact -v
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "Commit blocked: possible secret detected above."
+  echo "Remove it, or if this is a false positive, review before overriding."
+  exit 1
+fi
