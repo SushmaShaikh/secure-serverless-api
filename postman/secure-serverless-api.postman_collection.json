@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "secure-serverless-api",
+    "description": "Requests for the secure-serverless-api CloudFormation stack. Fill in the collection variables (helloUrl, itemsUrl, idToken) from your stack's Outputs and a Cognito login before running these.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "helloUrl", "value": "", "description": "Outputs > HelloUrl from the CloudFormation stack" },
+    { "key": "itemsUrl", "value": "", "description": "Outputs > ItemsUrl from the CloudFormation stack" },
+    { "key": "idToken", "value": "", "description": "IdToken from cognito-idp initiate-auth (not AccessToken)" },
+    { "key": "itemId", "value": "1", "description": "id to use when creating/fetching a test item" }
+  ],
+  "item": [
+    {
+      "name": "GET /hello (public)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{helloUrl}}", "host": ["{{helloUrl}}"] }
+      }
+    },
+    {
+      "name": "POST /items (auth required)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{idToken}}", "type": "string" }]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": \"{{itemId}}\",\n  \"name\": \"First Item\"\n}"
+        },
+        "url": { "raw": "{{itemsUrl}}", "host": ["{{itemsUrl}}"] }
+      }
+    },
+    {
+      "name": "GET /items/{id} (auth required)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{idToken}}", "type": "string" }]
+        },
+        "url": {
+          "raw": "{{itemsUrl}}/{{itemId}}",
+          "host": ["{{itemsUrl}}"],
+          "path": ["{{itemId}}"]
+        }
+      }
+    }
+  ]
+}

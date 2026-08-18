@@ -17,4 +17,9 @@ Lambda, DynamoDB, IAM, WAF, CloudWatch, and API throttling.
 
 ## Status
 
-Scaffolding only — infrastructure template not yet written.
+`template.yaml` defines a working stack: Lambda + HTTP API Gateway (`GET /hello`
+public, `POST /items` / `GET /items/{id}` backed by DynamoDB), Cognito
+authentication on the `/items` routes, and stage-level API throttling. Manually
+tested end to end — see [TESTING.md](TESTING.md) for what was verified and how.
+
+Not yet added: WAF, CloudWatch alarms.
