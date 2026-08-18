@@ -36,3 +36,16 @@ stack, using the AWS CLI, Postman, and PowerShell.
   well-documented API Gateway behavior. Treated as configured-but-not-demonstrated.
   Revisit with a proper load-testing tool (e.g. `hey`, `k6`, Artillery) if a live
   demonstration is needed later.
+
+## CloudWatch alarms
+
+- `LambdaErrorsAlarm` (watches `AWS/Lambda Errors` for the Hello function) and
+  `ApiGateway5xxAlarm` (watches `AWS/ApiGateway 5xxError` for this API/stage), both
+  publishing to an `AlarmTopic` SNS topic on trigger.
+- Subscribed a personal email to `AlarmTopic` via `aws sns subscribe`, confirmed via
+  the link in AWS's confirmation email. Verified with `aws sns list-subscriptions-by-topic`
+  that the subscription is active (no longer `PendingConfirmation`).
+- **Result:** subscription confirmed and active; did not force a real Lambda error or
+  5xx to see an actual alarm-triggered email arrive (would take several minutes for
+  CloudWatch to evaluate and transition state). Treated as configured-and-subscribed,
+  not live-fired - same honesty standard as the throttling entry above.

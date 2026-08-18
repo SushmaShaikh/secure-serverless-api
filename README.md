@@ -1,7 +1,7 @@
 # Secure Serverless API
 
 Infrastructure-as-code for a secure serverless API on AWS: API Gateway, Cognito,
-Lambda, DynamoDB, IAM, WAF, CloudWatch, and API throttling.
+Lambda, DynamoDB, IAM, CloudWatch, and API throttling.
 
 ## Security
 
@@ -19,7 +19,11 @@ Lambda, DynamoDB, IAM, WAF, CloudWatch, and API throttling.
 
 `template.yaml` defines a working stack: Lambda + HTTP API Gateway (`GET /hello`
 public, `POST /items` / `GET /items/{id}` backed by DynamoDB), Cognito
-authentication on the `/items` routes, and stage-level API throttling. Manually
-tested end to end — see [TESTING.md](TESTING.md) for what was verified and how.
+authentication on the `/items` routes, stage-level API throttling, and CloudWatch
+alarms (Lambda errors, API 5xx) notifying an SNS topic. Manually tested end to
+end — see [TESTING.md](TESTING.md) for what was verified and how.
 
-Not yet added: WAF, CloudWatch alarms.
+**WAF is intentionally not included.** The HTTP API type used here doesn't
+support direct WAF attachment (only REST API, CloudFront, ALB, AppSync, and
+Cognito do) - fronting it with CloudFront or migrating to REST API is a
+reasonable follow-up, planned as a separate project rather than a rework here.

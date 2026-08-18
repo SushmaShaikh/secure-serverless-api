@@ -5,6 +5,18 @@ Description: >
 
 Resources:
 
+  # --- The notification channel --------------------------------------------
+  # An SNS topic is just a named "mailbox" that things can publish messages
+  # to, and other things can subscribe to receive those messages. On its
+  # own it does nothing - no email address is configured here at all. You
+  # subscribe your own email to it after deploying (via CLI), so a
+  # personal address never ends up hardcoded in this file / committed to
+  # git.
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: secure-serverless-api-alarms
+
   # --- The user directory ---------------------------------------------------
   # Cognito User Pool: the actual account store - usernames, emails,
   # hashed passwords, verification state. Nothing about auth works until
@@ -289,6 +301,60 @@ Resources:
       # function. Still scoped to this one API's ID - not "*".
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*
 
+  # --- Alarms ---------------------------------------------------------------
+  # Namespace/MetricName/Dimensions identify the exact metric Lambda is
+  # already publishing for this specific function - we're not creating
+  # this data, just watching it.
+  # Period=300 (seconds) + EvaluationPeriods=1 means "look at 5-minute
+  # windows, and alarm the first time one window has >=1 error" - fast
+  # to notice, without being noisy on a single blip.
+  LambdaErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: secure-serverless-api-hello-errors
+      AlarmDescription: Fires when the Hello Lambda function has 1+ errors in a 5-minute window.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref HelloFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      # This is the "action" piece - what happens on alarm. Publishing to
+      # the SNS topic is what actually gets an email sent, once you've
+      # subscribed your address to it.
+      AlarmActions:
+        - !Ref AlarmTopic
+      TreatMissingData: notBreaching
+
+  # 5xxError = server-side failures only (Lambda crashing, timing out,
+  # integration errors) - deliberately not 4xxError, since our own 401s
+  # (missing auth) and 404s (not found) are expected, normal traffic, not
+  # something to page anyone about.
+  ApiGateway5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: secure-serverless-api-5xx
+      AlarmDescription: Fires when the API returns 1+ server errors (5xx) in a 5-minute window.
+      Namespace: AWS/ApiGateway
+      MetricName: 5xxError
+      Dimensions:
+        - Name: ApiId
+          Value: !Ref HttpApi
+        - Name: Stage
+          Value: '$default'
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+      TreatMissingData: notBreaching
+
 Outputs:
   HelloFunctionArn:
     Description: ARN of the Hello Lambda function
@@ -311,3 +377,6 @@ Outputs:
   UserPoolClientId:
     Description: Cognito App Client ID (needed to log in and get a token)
     Value: !Ref ItemsUserPoolClient
+  AlarmTopicArn:
+    Description: SNS topic ARN - subscribe your email to this to receive alarm notifications
+    Value: !Ref AlarmTopic
